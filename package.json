@@ -2,8 +2,13 @@
   "dependencies": {
     "@types/react": "^16.9.23",
     "@types/react-dom": "^16.9.5",
+    "@types/react-dropzone": "^5.1.0",
+    "@types/styled-components": "^5.0.1",
+    "frctl": "^2.0.0",
     "react": "^16.13.0",
-    "react-dom": "^16.13.0"
+    "react-dom": "^16.13.0",
+    "react-dropzone": "^10.2.1",
+    "styled-components": "^5.0.1"
   },
   "description": "Search for dogs",
   "devDependencies": {
