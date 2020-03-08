@@ -2,15 +2,21 @@ env:
   browser: true
   es6: true
   node: true
-extends: '@ridedott/eslint-config'
+
+extends:
+  - '@ridedott/eslint-config'
+  - 'plugin:react/recommended'
+
 overrides:
   - files: ./src/**/*spec.ts
     rules:
       '@typescript-eslint/no-magic-numbers': 'off'
+
 parserOptions:
   ecmaVersion: 10
   project: tsconfig.json
   sourceType: module
+
 rules:
   immutable/no-mutation: 'off'
   immutable/no-this: 'off'

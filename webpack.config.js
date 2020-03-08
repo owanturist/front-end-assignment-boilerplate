@@ -18,7 +18,7 @@ const configuration = {
   },
   devtool: 'cheap-module-eval-source-map',
   entry: {
-    app: './src/index.ts',
+    app: './src/index.tsx',
   },
   mode: 'development',
   module: {
@@ -31,7 +31,7 @@ const configuration = {
         test: /\.html$/u,
       },
       {
-        test: /\.ts$/u,
+        test: /\.ts(x)?$/u,
         use: [
           {
             loader: 'ts-loader',
@@ -97,7 +97,7 @@ const configuration = {
     }),
   ],
   resolve: {
-    extensions: ['.js', '.ts'],
+    extensions: ['.js', '.ts', '.tsx'],
     mainFields: ['browser', 'module', 'main'],
   },
   watch: true,
