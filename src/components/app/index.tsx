@@ -3,7 +3,8 @@ import Either, { Left, Right } from 'frctl/Either';
 import Maybe, { Just, Nothing } from 'frctl/Maybe';
 import RemoteData, { Failure, Loading, NotAsked, Succeed } from 'frctl/RemoteData/Optional';
 import * as React from 'react';
-import styled from 'styled-components';
+import { LazyLoadImage } from 'react-lazy-load-image-component';
+import styled, { keyframes } from 'styled-components';
 
 import { Aviary, Probe } from '../../aviary';
 import { Dispatch, Effect } from '../../core';
@@ -251,8 +252,19 @@ const StyledLastBox = styled(StyledBox)`
   height: 0;
 `
 
+const fadeIn = keyframes`
+  0% {
+    opacity: 0;
+  }
+
+  100% {
+    opacity: 1;
+  }
+`
+
 const StyledImageBox = styled(StyledBox)`
   align-items: center;
+  animation: ${fadeIn} .3s;
   background-position: center center;
   background-size: cover;
   border-radius: 3px;
@@ -308,59 +320,28 @@ const StyledImage = styled.img`
 
 interface ViewImageProps {
   picture: string;
-  scroller: React.RefObject<HTMLDivElement>;
 }
 
-interface ViewImageState {
-  visible: boolean;
-}
-
-class ViewImage extends React.Component<ViewImageProps, ViewImageState> {
-  public state = {
-    visible: false
-  }
-
-  private readonly node = React.createRef<HTMLDivElement>();
-
-  public shouldComponentUpdate(nextProperties: ViewImageProps, nextState: ViewImageState) {
-    return this.props.picture !== nextProperties.picture
-      || this.state.visible !== nextState.visible
-      ;
-  }
-
-  public componentDidMount() {
-    const { scroller } = this.props;
-
-    if (scroller.current === null || this.node.current === null) {
-      return;
-    }
-
-    if (scroller.current.scrollTop + scroller.current.clientHeight >= this.node.current.offsetTop) {
-      this.setState({ visible: true });
-
-      return;
-    }
-
-    const onScroll = () => {
-      if (scroller.current !== null && this.node.current !== null
-        && scroller.current.scrollTop + scroller.current.clientHeight >= this.node.current.offsetTop
-      ) {
-        this.setState({ visible: true });
-        scroller.current.removeEventListener('scroll', onScroll)
-      }
-    }
-
-    scroller.current.addEventListener('scroll', onScroll);
-  }
+class ViewImage extends React.PureComponent<ViewImageProps, { loaded: boolean }> {
+  public readonly state = {
+    loaded: false
+  };
 
   public render() {
-    if (!this.state.visible) {
-      return (
-        <StyledPlaceholderBox ref={this.node} />
-      );
-    }
-
     const { picture } = this.props;
+
+    if (!this.state.loaded) {
+      return (
+        <StyledPlaceholderBox>
+          <LazyLoadImage
+            height="0"
+            width="100%"
+            afterLoad={() => this.setState({ loaded: true })}
+            src="https://via.placeholder.com/1"
+          />
+        </StyledPlaceholderBox>
+      )
+    }
 
     return (
       <StyledImageBox
@@ -439,13 +420,11 @@ const StyledContent = styled.div`
 `
 
 export class View extends React.PureComponent<Props> {
-  private readonly scrollerReference = React.createRef<HTMLDivElement>();
-
   public render() {
     const { state, dispatch } = this.props;
 
     return (
-      <StyledScroller ref={this.scrollerReference}>
+      <StyledScroller>
         <StyledContent>
           <StyledDropzoneBox>
             <Dropzone
@@ -488,11 +467,7 @@ export class View extends React.PureComponent<Props> {
 
           {state.search.cata({
             Succeed: search => search.pack.map(dog => (
-              <ViewImage
-                key={dog}
-                picture={dog}
-                scroller={this.scrollerReference}
-              />
+              <ViewImage key={dog} picture={dog} />
             )),
 
             _: () => null
