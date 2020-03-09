@@ -246,8 +246,8 @@ const StyledDropzoneBox = styled(StyledBox)`
   max-width: 100%;
 `
 
-const StyledExpandBox = styled(StyledBox)`
-  flex: 1 1 0;
+const StyledLastBox = styled(StyledBox)`
+  flex: 4 1 0;
   height: 0;
 `
 
@@ -359,7 +359,6 @@ const StyledRoot = styled.div`
       'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
       sans-serif;
   font-size: 18px;
-  height: 100%;
   margin: -10px 0 0 -10px;
   min-height: 100%;
   overflow-y: auto;
@@ -413,7 +412,7 @@ export class View extends React.PureComponent<Props> {
           _: () => null
         })}
 
-        <StyledExpandBox />
+        <StyledLastBox />
       </StyledRoot>
     )
   }
