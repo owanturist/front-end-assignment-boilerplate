@@ -1,7 +1,7 @@
 import { load as mobilenetLoad, MobileNet } from '@tensorflow-models/mobilenet';
 import Either, { Left, Right } from 'frctl/Either';
 import Maybe, { Just, Nothing } from 'frctl/Maybe';
-import RemoteData, { Loading, NotAsked } from 'frctl/RemoteData/Optional';
+import RemoteData, { Failure, Loading, NotAsked, Succeed } from 'frctl/RemoteData/Optional';
 import * as React from 'react';
 import styled from 'styled-components';
 
@@ -31,7 +31,7 @@ class Classify implements Action {
       node.src = picture;
 
       node.addEventListener('load', () => {
-        mobilenet.classify(node)
+        mobilenet.classify(node, 1)
           .then(classifications => dispatch(new Classify(Right(classifications))))
           .catch(() => dispatch(new Classify(Left('Picture classification fails'))));
       })
@@ -39,18 +39,25 @@ class Classify implements Action {
   }
 
   public update(state: State): [State, Array<Effect<Action>>] {
-    return [
-      {
-        ...state,
-        classifications: RemoteData.fromEither(this.result)
-      },
-      this.result.cata({
-        Left: error => [
+    return this.result.cata({
+      Left: error => [
+        {
+          ...state,
+          classifications: Failure(error)
+        },
+        [
           Toast.error(error).show()
-        ],
-        Right: () => []
-      })
-    ]
+        ]
+      ],
+
+      Right: classifications => [
+        {
+          ...state,
+          classifications: Succeed(classifications)
+        },
+        []
+      ]
+    })
   }
 }
 
@@ -122,7 +129,13 @@ class DropPicture implements Action {
 }
 
 class LoadMobileNet implements Action {
-  public constructor(private readonly result: Either<string, MobileNet>) { }
+  private constructor(private readonly result: Either<string, MobileNet>) { }
+
+  public static run: Effect<Action> = dispatch => {
+    mobilenetLoad()
+      .then(mobilenet => dispatch(new LoadMobileNet(Right(mobilenet))))
+      .catch(error => dispatch(new LoadMobileNet(Left(String(error)))))
+  }
 
   public update(state: State): [State, Array<Effect<Action>>] {
     return [
@@ -154,11 +167,7 @@ export const init: [State, Array<Effect<Action>>] = [
     classifications: NotAsked
   },
   [
-    dispatch => {
-      mobilenetLoad()
-        .then(mobilenet => dispatch(new LoadMobileNet(Right(mobilenet))))
-        .catch(error => dispatch(new LoadMobileNet(Left(String(error)))))
-    }
+    LoadMobileNet.run
   ]
 ]
 
