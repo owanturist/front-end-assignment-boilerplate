@@ -243,7 +243,12 @@ const StyledBox = styled.div`
 
 const StyledDropzoneBox = styled(StyledBox)`
   flex: 0 0 auto;
-  width: 400px;
+  max-width: 100%;
+`
+
+const StyledExpandBox = styled(StyledBox)`
+  flex: 1 1 0;
+  height: 0;
 `
 
 const StyledImageBox = styled(StyledBox)`
@@ -266,10 +271,6 @@ const StyledImageBox = styled(StyledBox)`
     right: 0;
     top: 0;
   }
-`
-
-const StyledOriginalImageBox = styled(StyledImageBox)`
-  flex: 0 0 auto;
 `
 
 const StyledImage = styled.img`
@@ -318,17 +319,9 @@ export const View = ({ state, dispatch }: Props) => (
     {state.picture.cata({
       Nothing: () => null,
 
-      Just: picture => state.sameBreedDogs.isSucceed() ? (
+      Just: picture => (
         <ViewImage picture={picture} />
-      ) : (
-          <StyledOriginalImageBox
-            style={{
-              backgroundImage: `url(${picture})`
-            }}
-          >
-            <StyledImage src={picture} />
-          </StyledOriginalImageBox>
-        )
+      )
     })}
 
     {state.sameBreedDogs.cata({
@@ -340,5 +333,7 @@ export const View = ({ state, dispatch }: Props) => (
 
       _: () => null
     })}
+
+    <StyledExpandBox />
   </StyledRoot>
 );
