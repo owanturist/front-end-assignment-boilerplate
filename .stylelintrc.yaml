@@ -25,3 +25,6 @@ rules:
     - ignore:
         - custom-elements
   value-no-vendor-prefix: true
+
+  # Does not work together with auto fix
+  declaration-empty-line-before: never

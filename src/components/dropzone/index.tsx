@@ -1,19 +1,14 @@
-import Maybe, { Nothing } from 'frctl/Maybe';
+import { Maybe, Nothing } from 'frctl/Maybe';
 import * as React from 'react';
-import ReactDropzone, {
-  DropzoneInputProps as DropzoneInputProperties,
-} from 'react-dropzone';
-import styled, { StyledComponent } from 'styled-components';
-
-import { Dispatch, Effect } from '../core';
+import ReactDropzone from 'react-dropzone';
+import styled from 'styled-components';
 
 interface StyledRootProps {
   hovered: boolean;
 }
 
 const StyledRoot = styled.div<StyledRootProps>`
-  background: ${(properties: StyledRootProps): string =>
-    properties.hovered ? '#f8f8f8' : '#eee'};
+  background: ${properties => properties.hovered ? '#f8f8f8' : '#eee'};
   border-radius: 3px;
   color: #444;
   cursor: default;
@@ -51,16 +46,16 @@ export default class Dropzone extends React.PureComponent<Props, State> {
 
   private readonly onDragLeave: () => void;
 
-  private readonly onFileLoad: () => void;
+  private readonly onFileLoad: (file: Maybe<File>) => void;
 
   public constructor(propserties: Props) {
     super(propserties);
 
-    this.onDragEnter = (): void => this.setState({ hovered: true });
+    this.onDragEnter = () => this.setState({ hovered: true });
 
-    this.onDragLeave = (): void => this.setState({ hovered: false });
+    this.onDragLeave = () => this.setState({ hovered: false });
 
-    this.onFileLoad = (file: Maybe<File>): void => {
+    this.onFileLoad = file => {
       this.setState({ hovered: false });
       this.props.onLoad(file);
     };
@@ -71,10 +66,8 @@ export default class Dropzone extends React.PureComponent<Props, State> {
       <ReactDropzone
         accept="text/plain"
         multiple={false}
-        onDropAccepted={(files: File[]): void => {
-          this.onFileLoad(Maybe.fromNullable(files[0]));
-        }}
-        onDropRejected={(): void => this.onFileLoad(Nothing)}
+        onDropAccepted={(files: File[]) => this.onFileLoad(Maybe.fromNullable(files[0]))}
+        onDropRejected={() => this.onFileLoad(Nothing)}
         onDragEnter={this.onDragEnter}
         onDragLeave={this.onDragLeave}
       >

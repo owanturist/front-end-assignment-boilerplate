@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "jsx": "react",
+    "jsx": "preserve",
     "allowSyntheticDefaultImports": true,
     "alwaysStrict": true,
     "charset": "utf-8",
@@ -15,9 +15,13 @@
     "noUnusedParameters": true,
     "pretty": true,
     "rootDir": "src",
+    "skipLibCheck": true,
+    "isolatedModules": true,
     "strict": true,
     "strictNullChecks": true,
     "target": "es2019",
+    "esModuleInterop": true,
+    "strictFunctionTypes": false,
     "typeRoots": ["./@types", "node_modules/@types"],
     "experimentalDecorators": true,
     "incremental": true,
@@ -26,5 +30,6 @@
     "tsBuildInfoFile": "./.cache/typescript"
   },
   "files": ["src/index.tsx"],
-  "include": ["./**/*"]
+  "include": ["src"],
+  "exclude": ["node_modules", "typeings/main", "typeings/main.d.ts"]
 }
