@@ -27,11 +27,14 @@ class AviaryImpl implements Aviary {
   public constructor(private readonly breeds: Dict<string, Set<string>>) {}
 
   public classify(classifications: Classification[]): Maybe<Probe> {
-    return classifications.reduce(
-      (result, { probability, className }) =>
-        result.orElse(() => this.classifySingle(probability, className)),
-      Nothing,
-    );
+    return classifications
+      .slice()
+      .sort((left, right) => right.probability - left.probability)
+      .reduce(
+        (result, { probability, className }) =>
+          result.orElse(() => this.classifySingle(probability, className)),
+        Nothing,
+      );
   }
 
   private classifySingle(match: number, className: string): Maybe<Probe> {

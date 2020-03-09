@@ -28,7 +28,7 @@ class Classify implements Action {
       node.src = picture;
 
       node.addEventListener('load', () => {
-        mobilenet.classify(node, 5)
+        mobilenet.classify(node, 3)
           .then(classifications => {
             return aviary.classify(classifications).cata({
               Nothing: () => Promise.reject('Could not identify dog\'s breed.'),
@@ -334,10 +334,10 @@ class ViewImage extends React.PureComponent<ViewImageProps, { loaded: boolean }>
       return (
         <StyledPlaceholderBox>
           <LazyLoadImage
-            height="0"
+            height="auto"
             width="100%"
             afterLoad={() => this.setState({ loaded: true })}
-            src="https://via.placeholder.com/1"
+            src={picture}
           />
         </StyledPlaceholderBox>
       )
@@ -416,7 +416,7 @@ const StyledContent = styled.div`
   display: flex;
   flex-flow: row wrap;
   margin: -10px 0 0 -10px;
-  padding: 20px;
+  padding: 10px;
 `
 
 export class View extends React.PureComponent<Props> {
