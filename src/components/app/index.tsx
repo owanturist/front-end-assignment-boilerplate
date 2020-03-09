@@ -285,10 +285,27 @@ const StyledImageBox = styled(StyledBox)`
   }
 `
 
+const flash = keyframes`
+  0% {
+    background-position: -200px 0;
+  }
+
+  100% {
+    background-position: calc(200px + 100%) 0;
+  }
+`
+
 const StyledPlaceholderBox = styled(StyledImageBox)`
+  animation: 1.2s ${flash} ease-in-out infinite;
   background-color: #eee;
-  box-shadow: none;
+  background-image: linear-gradient(90deg, transparent, #f5f5f5, transparent);
+  background-repeat: no-repeat;
+  background-size: 200px 100%;
   width: 300px;
+
+  &::before {
+    content: none;
+  }
 
   &:nth-child(2n + 1) {
     width: 180px;
@@ -468,6 +485,10 @@ export class View extends React.PureComponent<Props> {
           {state.search.cata({
             Succeed: search => search.pack.map(dog => (
               <ViewImage key={dog} picture={dog} />
+            )),
+
+            Loading: () => new Array(10).fill(null).map((_value, index) => (
+              <StyledPlaceholderBox key={index} />
             )),
 
             _: () => null
