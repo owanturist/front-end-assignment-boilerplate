@@ -27,13 +27,9 @@ class Classify implements Action {
       node.src = picture;
 
       node.addEventListener('load', () => {
-        mobilenet.classify(node, 1)
+        mobilenet.classify(node, 5)
           .then(classifications => {
-            if (classifications.length === 0) {
-              return Promise.reject('Classification is empty');
-            }
-
-            return aviary.bait(classifications[0].className).cata({
+            return aviary.classify(classifications).cata({
               Nothing: () => Promise.reject('Could not identify dog\'s breed.'),
 
               Just: Aviary.search
@@ -233,6 +229,8 @@ export const init: [State, Array<Effect<Action>>] = [
 
 // V I E W
 
+const ROW_HEIGHT = 200;
+
 const StyledRoot = styled.div`
   display: flex;
   flex-flow: row wrap;
@@ -242,7 +240,7 @@ const StyledRoot = styled.div`
 
 const StyledBox = styled.div`
   flex: 0 0 auto;
-  height: 200px;
+  height: ${ROW_HEIGHT}px;
   margin: 10px 0 0 10px;
 `
 
@@ -252,6 +250,7 @@ const StyledDropzoneBox = styled(StyledBox)`
 
 const StyledImage = styled.img`
   border-radius: 3px;
+  display: block;
   height: 100%;
   width: auto;
 `
@@ -274,6 +273,7 @@ export const View = ({ state, dispatch }: Props) => (
 
     {state.picture.cata({
       Nothing: () => null,
+
       Just: picture => (
         <StyledBox>
           <StyledImage src={picture} />

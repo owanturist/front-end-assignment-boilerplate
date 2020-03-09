@@ -8,45 +8,61 @@ import { Effect } from './core';
 
 const DOG_API = 'https://dog.ceo/api';
 
-export interface Breed {
-  name: string;
-  subName: Maybe<string>;
+export interface Result {
+  probability: number;
+  breed: string;
+  subBreed: Maybe<string>;
+}
+
+export interface Classification {
+  className: string;
+  probability: number;
 }
 
 export interface Aviary {
-  bait(probe: string): Maybe<Breed>;
+  classify(classifications: Classification[]): Maybe<Result>;
 }
 
 class AviaryImpl implements Aviary {
   public constructor(private readonly breeds: Dict<string, Set<string>>) {}
 
-  public bait(probe: string): Maybe<Breed> {
-    return probe
+  public classify(classifications: Classification[]): Maybe<Result> {
+    return classifications.reduce(
+      (result, { probability, className }) =>
+        result.orElse(() => this.probe(probability, className)),
+      Nothing,
+    );
+  }
+
+  private probe(probability: number, className: string): Maybe<Result> {
+    return className
       .toLowerCase()
       .split(/,\s*/u)
       .reduce(
-        (result, item) => result.orElse(() => this.itemSearch(item)),
+        (result, item) =>
+          result.orElse(() => this.itemSearch(probability, item)),
         Nothing,
       );
   }
 
-  private itemSearch(item: string): Maybe<Breed> {
+  private itemSearch(probability: number, item: string): Maybe<Result> {
     const names = item.split(/\s|-/u);
 
     return names
       .reduce(
-        (result, name) =>
+        (result, breed) =>
           result.orElse(() =>
-            this.breeds.get(name).map(subNames => ({ name, subNames })),
+            this.breeds.get(breed).map(subBreeds => ({ breed, subBreeds })),
           ),
         Nothing,
       )
-      .map(({ name, subNames }) => ({
-        name,
-        subName: names.reduce(
-          (result, subName) =>
+      .map(({ breed, subBreeds }) => ({
+        probability,
+        breed,
+        subBreed: names.reduce(
+          (result, subBreed) =>
             result.orElse(() =>
-              subNames.member(subName) ? Just(subName) : Nothing,
+              subBreeds.member(subBreed) ? Just(subBreed) : Nothing,
             ),
           Nothing,
         ),
@@ -87,11 +103,11 @@ const init = <Action>(
     );
 };
 
-const search = (breed: Breed): Promise<string[]> => {
-  const method = breed.subName.cata({
-    Nothing: () => `breed/${breed.name}/images`,
+const search = (breed: Result): Promise<string[]> => {
+  const method = breed.subBreed.cata({
+    Nothing: () => `breed/${breed.breed}/images`,
 
-    Just: subName => `breed/${breed.name}/${subName}/images`,
+    Just: subBreed => `breed/${breed.breed}/${subBreed}/images`,
   });
 
   return fetch(`${DOG_API}/${method}`)
