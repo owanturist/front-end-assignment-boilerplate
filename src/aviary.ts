@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-use-before-define */
+
 import Dict from 'frctl/Dict';
 import Either, { Left } from 'frctl/Either';
 import Decode from 'frctl/Json/Decode';
@@ -19,12 +21,62 @@ export interface Classification {
   probability: number;
 }
 
-export interface Aviary {
-  classify(classifications: Classification[]): Maybe<Probe>;
-}
+const dogApiDecoder = <Data>(
+  decoder: Decode.Decoder<Data>,
+): Decode.Decoder<Data> => {
+  return Decode.field('status').string.chain(status => {
+    switch (status) {
+      case 'error':
+        return Decode.field('message').string.chain(Decode.fail);
 
-class AviaryImpl implements Aviary {
+      case 'success':
+        return Decode.field('message').of(decoder);
+
+      default:
+        return Decode.fail(`Unknown status "${status}"`);
+    }
+  });
+};
+
+const aviaryDecoder: Decode.Decoder<Aviary> = Decode.keyValue(
+  Decode.list(Decode.string).map(Set.fromList),
+).map(pairs => new Aviary(Dict.fromList(pairs)));
+
+export class Aviary {
   public constructor(private readonly breeds: Dict<string, Set<string>>) {}
+
+  public static init<Action>(
+    tagger: (result: Either<string, Aviary>) => Action,
+  ): Effect<Action> {
+    return dispatch => {
+      fetch(`${DOG_API}/breeds/list/all`)
+        .then(response => response.text())
+        .then(json => dogApiDecoder(aviaryDecoder).decodeJSON(json))
+        .then(
+          result =>
+            dispatch(tagger(result.mapLeft(error => error.stringify(4)))),
+          error => dispatch(tagger(Left(String(error)))),
+        );
+    };
+  }
+
+  public static search(breed: Probe): Promise<string[]> {
+    const method = breed.subBreed.cata({
+      Nothing: () => `breed/${breed.breed}/images`,
+
+      Just: subBreed => `breed/${breed.breed}/${subBreed}/images`,
+    });
+
+    return fetch(`${DOG_API}/${method}`)
+      .then(response => response.text())
+      .then(json => dogApiDecoder(Decode.list(Decode.string)).decodeJSON(json))
+      .then(result =>
+        result.cata({
+          Left: error => Promise.reject(error.stringify(4)),
+          Right: pictures => Promise.resolve(pictures),
+        }),
+      );
+  }
 
   public classify(classifications: Classification[]): Maybe<Probe> {
     return classifications
@@ -72,56 +124,3 @@ class AviaryImpl implements Aviary {
       }));
   }
 }
-
-const dogApiDecoder = <Data>(
-  decoder: Decode.Decoder<Data>,
-): Decode.Decoder<Data> => {
-  return Decode.field('status').string.chain(status => {
-    switch (status) {
-      case 'error':
-        return Decode.field('message').string.chain(Decode.fail);
-
-      case 'success':
-        return Decode.field('message').of(decoder);
-
-      default:
-        return Decode.fail(`Unknown status "${status}"`);
-    }
-  });
-};
-
-const aviaryDecoder: Decode.Decoder<Aviary> = Decode.keyValue(
-  Decode.list(Decode.string).map(Set.fromList),
-).map(pairs => new AviaryImpl(Dict.fromList(pairs)));
-
-const init = <Action>(
-  tagger: (result: Either<string, Aviary>) => Action,
-): Effect<Action> => dispatch => {
-  fetch(`${DOG_API}/breeds/list/all`)
-    .then(response => response.text())
-    .then(json => dogApiDecoder(aviaryDecoder).decodeJSON(json))
-    .then(
-      result => dispatch(tagger(result.mapLeft(error => error.stringify(4)))),
-      error => dispatch(tagger(Left(String(error)))),
-    );
-};
-
-const search = (breed: Probe): Promise<string[]> => {
-  const method = breed.subBreed.cata({
-    Nothing: () => `breed/${breed.breed}/images`,
-
-    Just: subBreed => `breed/${breed.breed}/${subBreed}/images`,
-  });
-
-  return fetch(`${DOG_API}/${method}`)
-    .then(response => response.text())
-    .then(json => dogApiDecoder(Decode.list(Decode.string)).decodeJSON(json))
-    .then(result =>
-      result.cata({
-        Left: error => Promise.reject(error.stringify(4)),
-        Right: pictures => Promise.resolve(pictures),
-      }),
-    );
-};
-
-export const Aviary = { init, search };
