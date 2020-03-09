@@ -6,7 +6,7 @@ import Decode from 'frctl/Json/Decode';
 import Maybe, { Just, Nothing } from 'frctl/Maybe';
 import Set from 'frctl/Set';
 
-import { Effect } from './core';
+import { Effect } from '../core';
 
 const DOG_API = 'https://dog.ceo/api';
 
