@@ -31,7 +31,7 @@ const configuration = {
         test: /\.html$/u,
       },
       {
-        test: /\.ts(x)?$/u,
+        test: /\.tsx?$/u,
         use: [
           {
             loader: 'ts-loader',
@@ -59,7 +59,7 @@ const configuration = {
         ],
       },
       {
-        test: /\.(svg)$/,
+        test: /\.svg$/,
         use: [
           {
             loader: 'file-loader',

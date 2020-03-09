@@ -12,10 +12,18 @@
   },
   "description": "Search for dogs",
   "devDependencies": {
+    "@babel/core": "^7.8.7",
     "@ridedott/eslint-config": "^1.0.0",
+    "@storybook/addon-actions": "^5.3.14",
+    "@storybook/addon-knobs": "^5.3.14",
+    "@storybook/addon-links": "^5.3.14",
+    "@storybook/addons": "^5.3.14",
+    "@storybook/preset-typescript": "^2.1.0",
+    "@storybook/react": "^5.3.14",
     "@types/jest": "^25.1.2",
     "@types/webpack-env": "^1.15.1",
     "autoprefixer": "^9.7.4",
+    "babel-loader": "^8.0.6",
     "clean-webpack-plugin": "^3.0.0",
     "css-loader": "^3.4.2",
     "cssnano": "^4.1.10",
@@ -80,7 +88,9 @@
     "lint:ts:fix": "eslint --fix --resolve-plugins-relative-to \"./node_modules/@ridedott/eslint-config\" \"**/*.ts\"",
     "start": "webpack-dev-server --config ./webpack.config.js",
     "test": "jest",
-    "types": "tsc --noEmit"
+    "types": "tsc --noEmit",
+    "storybook": "start-storybook -p 6006",
+    "build-storybook": "build-storybook"
   },
   "version": "1.0.0"
 }

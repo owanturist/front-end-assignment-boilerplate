@@ -12,6 +12,9 @@ const StyledRoot = styled.div<StyledRootProps>`
   border-radius: 3px;
   color: #444;
   cursor: default;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+      'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+      sans-serif;
   font-size: 18px;
   outline: none;
   padding: 20px;
