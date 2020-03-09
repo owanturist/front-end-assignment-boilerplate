@@ -229,8 +229,6 @@ export const init: [State, Array<Effect<Action>>] = [
 
 // V I E W
 
-const ROW_HEIGHT = 200;
-
 const StyledRoot = styled.div`
   display: flex;
   flex-flow: row wrap;
@@ -239,23 +237,28 @@ const StyledRoot = styled.div`
 `;
 
 const StyledBox = styled.div`
-  flex: 0 0 auto;
-  height: ${ROW_HEIGHT}px;
+  height: 200px;
   margin: 10px 0 0 10px;
 `
 
 const StyledDropzoneBox = styled(StyledBox)`
+  flex: 0 0 auto;
   width: 400px;
 `
 
 const StyledImageBox = styled(StyledBox)`
+  align-items: center;
+  background-position: center center;
+  background-size: cover;
   border-radius: 3px;
+  display: flex;
+  flex: 1 0 auto;
   overflow: hidden;
   position: relative;
 
   &::before {
-    bottom: 0;
     border-radius: inherit;
+    bottom: 0;
     box-shadow: 0 0 0 1px rgba(0, 0, 0, .1) inset;
     content: "";
     left: 0;
@@ -265,11 +268,36 @@ const StyledImageBox = styled(StyledBox)`
   }
 `
 
+const StyledOriginalImageBox = styled(StyledImageBox)`
+  flex: 0 0 auto;
+`
+
 const StyledImage = styled.img`
   display: block;
   height: 100%;
+  opacity: 0;
   width: auto;
 `
+
+interface ViewImageProps {
+  picture: string;
+}
+
+class ViewImage extends React.PureComponent<ViewImageProps> {
+  public render() {
+    const { picture } = this.props;
+
+    return (
+      <StyledImageBox
+        style={{
+          backgroundImage: `url(${picture})`
+        }}
+      >
+        <StyledImage src={picture} />
+      </StyledImageBox>
+    )
+  }
+}
 
 export interface Props {
   state: State;
@@ -290,19 +318,23 @@ export const View = ({ state, dispatch }: Props) => (
     {state.picture.cata({
       Nothing: () => null,
 
-      Just: picture => (
-        <StyledImageBox>
-          <StyledImage src={picture} />
-        </StyledImageBox>
-      )
+      Just: picture => state.sameBreedDogs.isSucceed() ? (
+        <ViewImage picture={picture} />
+      ) : (
+          <StyledOriginalImageBox
+            style={{
+              backgroundImage: `url(${picture})`
+            }}
+          >
+            <StyledImage src={picture} />
+          </StyledOriginalImageBox>
+        )
     })}
 
     {state.sameBreedDogs.cata({
       Succeed: sameBreedDogs => (
         sameBreedDogs.map(dog => (
-          <StyledImageBox key={dog}>
-            <StyledImage src={dog} />
-          </StyledImageBox>
+          <ViewImage key={dog} picture={dog} />
         ))
       ),
 
