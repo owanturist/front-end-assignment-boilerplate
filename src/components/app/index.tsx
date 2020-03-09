@@ -229,13 +229,6 @@ export const init: [State, Array<Effect<Action>>] = [
 
 // V I E W
 
-const StyledRoot = styled.div`
-  display: flex;
-  flex-flow: row wrap;
-  margin: -10px 0 0 -10px;
-  padding: 20px;
-`;
-
 const StyledBox = styled.div`
   height: 200px;
   margin: 10px 0 0 10px;
@@ -273,6 +266,10 @@ const StyledImageBox = styled(StyledBox)`
   }
 `
 
+const StyledOriginalImageBox = styled(StyledImageBox)`
+  flex: 0 0 auto;
+`
+
 const StyledImage = styled.img`
   display: block;
   height: 100%;
@@ -305,35 +302,56 @@ export interface Props {
   dispatch: Dispatch<Action>;
 }
 
-export const View = ({ state, dispatch }: Props) => (
-  <StyledRoot>
-    <StyledDropzoneBox>
-      <Dropzone
-        accept="image/*"
-        onLoad={file => dispatch(new DropPicture(file))}
-      >
-        Choose or drag&drop dog picture
-      </Dropzone>
-    </StyledDropzoneBox>
+const StyledRoot = styled.div`
+  display: flex;
+  flex-flow: row wrap;
+  margin: -10px 0 0 -10px;
+  padding: 20px;
+`;
 
-    {state.picture.cata({
-      Nothing: () => null,
+export class View extends React.PureComponent<Props> {
+  public render() {
+    const { state, dispatch } = this.props;
 
-      Just: picture => (
-        <ViewImage picture={picture} />
-      )
-    })}
+    return (
+      <StyledRoot>
+        <StyledDropzoneBox>
+          <Dropzone
+            accept="image/*"
+            onLoad={file => dispatch(new DropPicture(file))}
+          >
+            Choose or drag&drop dog picture
+          </Dropzone>
+        </StyledDropzoneBox>
 
-    {state.sameBreedDogs.cata({
-      Succeed: sameBreedDogs => (
-        sameBreedDogs.map(dog => (
-          <ViewImage key={dog} picture={dog} />
-        ))
-      ),
+        {state.picture.cata({
+          Nothing: () => null,
 
-      _: () => null
-    })}
+          Just: picture => state.sameBreedDogs.isSucceed() ? (
+            <ViewImage picture={picture} />
+          ) : (
+              <StyledOriginalImageBox
+                style={{
+                  backgroundImage: `url(${picture})`
+                }}
+              >
+                <StyledImage src={picture} />
+              </StyledOriginalImageBox>
+            )
+        })}
 
-    <StyledExpandBox />
-  </StyledRoot>
-);
+        {state.sameBreedDogs.cata({
+          Succeed: sameBreedDogs => (
+            sameBreedDogs.map(dog => (
+              <ViewImage key={dog} picture={dog} />
+            ))
+          ),
+
+          _: () => null
+        })}
+
+        <StyledExpandBox />
+      </StyledRoot>
+    )
+  }
+}
