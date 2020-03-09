@@ -5,7 +5,7 @@ import RemoteData, { Failure, Loading, NotAsked, Succeed } from 'frctl/RemoteDat
 import * as React from 'react';
 import styled from 'styled-components';
 
-import { Aviary } from '../../aviary';
+import { Aviary, Probe } from '../../aviary';
 import { Dispatch, Effect } from '../../core';
 import * as Toast from '../../toast'
 import Dropzone from '../dropzone';
@@ -17,7 +17,7 @@ export interface Action {
 }
 
 class Classify implements Action {
-  private constructor(private readonly result: Either<string, string[]>) { }
+  private constructor(private readonly result: Either<string, Search>) { }
 
   public static run(mobilenet: MobileNet, aviary: Aviary, picture: string): Effect<Action> {
     return dispatch => {
@@ -32,10 +32,12 @@ class Classify implements Action {
             return aviary.classify(classifications).cata({
               Nothing: () => Promise.reject('Could not identify dog\'s breed.'),
 
-              Just: Aviary.search
+              Just: probe => {
+                return Aviary.search(probe)
+                  .then(pack => dispatch(new Classify(Right({ probe, pack }))));
+              }
             })
           })
-          .then(pictures => dispatch(new Classify(Right(pictures))))
           .catch(error => dispatch(new Classify(Left(String(error)))));
       })
     }
@@ -46,7 +48,7 @@ class Classify implements Action {
       Left: error => [
         {
           ...state,
-          sameBreedDogs: Failure(error)
+          search: Failure(error)
         },
         [
           Toast.error(error).show()
@@ -56,7 +58,7 @@ class Classify implements Action {
       Right: classifications => [
         {
           ...state,
-          sameBreedDogs: Succeed(classifications)
+          search: Succeed(classifications)
         },
         []
       ]
@@ -123,7 +125,7 @@ class DropPicture implements Action {
     return [
       {
         ...state,
-        sameBreedDogs: Loading
+        search: Loading
       },
       [this.file.cata({
         Nothing: () => Toast.warning('It waits for pictures only').show(),
@@ -207,11 +209,16 @@ class LoadAviary implements Action {
 
 // S T A T E
 
+interface Search {
+  probe: Probe;
+  pack: string[];
+}
+
 export type State = Readonly<{
   picture: Maybe<string>;
   aviary: RemoteData<string, Aviary>;
   mobilenet: RemoteData<string, MobileNet>;
-  sameBreedDogs: RemoteData<string, string[]>;
+  search: RemoteData<string, Search>;
 }>;
 
 export const init: [State, Array<Effect<Action>>] = [
@@ -219,7 +226,7 @@ export const init: [State, Array<Effect<Action>>] = [
     picture: Nothing,
     aviary: Loading,
     mobilenet: Loading,
-    sameBreedDogs: NotAsked
+    search: NotAsked
   },
   [
     LoadMobileNet.run,
@@ -250,7 +257,7 @@ const StyledImageBox = styled(StyledBox)`
   background-size: cover;
   border-radius: 3px;
   display: flex;
-  flex: 1 0 auto;
+  flex: 2 0 auto;
   overflow: hidden;
   position: relative;
 
@@ -297,15 +304,65 @@ class ViewImage extends React.PureComponent<ViewImageProps> {
   }
 }
 
+const StyledProbeBox = styled(StyledBox)`
+  background: #2ecc71;
+  border-radius: 3px;
+  box-sizing: border-box;
+  color: #fff;
+  display: flex;
+  flex: 1 0 auto;
+  flex-flow: column;
+  justify-content: center;
+  padding: 20px 40px;
+`
+
+const StyledProbeLine = styled.p`
+  margin: 0;
+
+  & + & {
+    margin-top: 10px;
+  }
+`
+
+const ViewProbeBox = ({ probe }: { probe: Probe }) => (
+  <StyledProbeBox>
+    <StyledProbeLine>
+      Breed: <strong>{probe.breed}</strong>
+    </StyledProbeLine>
+
+    {probe.subBreed.cata({
+      Nothing: () => null,
+
+      Just: subBreed => (
+        <StyledProbeLine>
+          Sub-breed: <strong>{subBreed}</strong>
+        </StyledProbeLine>
+      )
+    })}
+
+    <StyledProbeLine>
+      Match: <strong>{(100 * probe.match).toFixed(2)}%</strong>
+    </StyledProbeLine>
+  </StyledProbeBox>
+)
+
 export interface Props {
   state: State;
   dispatch: Dispatch<Action>;
 }
 
 const StyledRoot = styled.div`
+  box-sizing: border-box;
   display: flex;
   flex-flow: row wrap;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+      'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+      sans-serif;
+  font-size: 18px;
+  height: 100%;
   margin: -10px 0 0 -10px;
+  min-height: 100%;
+  overflow-y: auto;
   padding: 20px;
 `;
 
@@ -314,7 +371,7 @@ export class View extends React.PureComponent<Props> {
     const { state, dispatch } = this.props;
 
     return (
-      <StyledRoot>
+      <StyledRoot onScroll={this.onScroll}>
         <StyledDropzoneBox>
           <Dropzone
             accept="image/*"
@@ -327,7 +384,7 @@ export class View extends React.PureComponent<Props> {
         {state.picture.cata({
           Nothing: () => null,
 
-          Just: picture => state.sameBreedDogs.isSucceed() ? (
+          Just: picture => state.search.isSucceed() ? (
             <ViewImage picture={picture} />
           ) : (
               <StyledOriginalImageBox
@@ -340,12 +397,18 @@ export class View extends React.PureComponent<Props> {
             )
         })}
 
-        {state.sameBreedDogs.cata({
-          Succeed: sameBreedDogs => (
-            sameBreedDogs.map(dog => (
-              <ViewImage key={dog} picture={dog} />
-            ))
+        {state.search.cata({
+          Succeed: search => (
+            <ViewProbeBox probe={search.probe} />
           ),
+
+          _: () => null
+        })}
+
+        {state.search.cata({
+          Succeed: search => search.pack.map(dog => (
+            <ViewImage key={dog} picture={dog} />
+          )),
 
           _: () => null
         })}
@@ -354,4 +417,9 @@ export class View extends React.PureComponent<Props> {
       </StyledRoot>
     )
   }
+
+  private readonly onScroll = (event: React.UIEvent<HTMLElement>) => {
+    // eslint-disable-next-line no-console
+    console.log(event.currentTarget.scrollTop);
+  };
 }

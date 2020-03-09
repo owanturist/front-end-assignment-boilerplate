@@ -8,8 +8,8 @@ import { Effect } from './core';
 
 const DOG_API = 'https://dog.ceo/api';
 
-export interface Result {
-  probability: number;
+export interface Probe {
+  match: number;
   breed: string;
   subBreed: Maybe<string>;
 }
@@ -20,33 +20,33 @@ export interface Classification {
 }
 
 export interface Aviary {
-  classify(classifications: Classification[]): Maybe<Result>;
+  classify(classifications: Classification[]): Maybe<Probe>;
 }
 
 class AviaryImpl implements Aviary {
   public constructor(private readonly breeds: Dict<string, Set<string>>) {}
 
-  public classify(classifications: Classification[]): Maybe<Result> {
+  public classify(classifications: Classification[]): Maybe<Probe> {
     return classifications.reduce(
       (result, { probability, className }) =>
-        result.orElse(() => this.probe(probability, className)),
+        result.orElse(() => this.classifySingle(probability, className)),
       Nothing,
     );
   }
 
-  private probe(probability: number, className: string): Maybe<Result> {
+  private classifySingle(match: number, className: string): Maybe<Probe> {
     return className
       .toLowerCase()
       .split(/,\s*/u)
       .reduce(
-        (result, item) =>
-          result.orElse(() => this.itemSearch(probability, item)),
+        (result, fragment) =>
+          result.orElse(() => this.classifyFragment(match, fragment)),
         Nothing,
       );
   }
 
-  private itemSearch(probability: number, item: string): Maybe<Result> {
-    const names = item.split(/\s|-/u);
+  private classifyFragment(match: number, fragment: string): Maybe<Probe> {
+    const names = fragment.split(/\s|-/u);
 
     return names
       .reduce(
@@ -57,7 +57,7 @@ class AviaryImpl implements Aviary {
         Nothing,
       )
       .map(({ breed, subBreeds }) => ({
-        probability,
+        match,
         breed,
         subBreed: names.reduce(
           (result, subBreed) =>
@@ -103,7 +103,7 @@ const init = <Action>(
     );
 };
 
-const search = (breed: Result): Promise<string[]> => {
+const search = (breed: Probe): Promise<string[]> => {
   const method = breed.subBreed.cata({
     Nothing: () => `breed/${breed.breed}/images`,
 
