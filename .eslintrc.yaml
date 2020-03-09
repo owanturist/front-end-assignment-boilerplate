@@ -31,3 +31,5 @@ rules:
   '@typescript-eslint/no-parameter-properties': off
   sort-keys: off
   new-cap: off
+  max-classes-per-file: off
+  react/display-name: off

@@ -13,7 +13,7 @@ render(
     <ToastContainer />
     <Provider
       flags={null}
-      init={() => [App.initial, []]}
+      init={() => App.init}
       update={(action, state) => action.update(state)}
       view={App.View}
     />
