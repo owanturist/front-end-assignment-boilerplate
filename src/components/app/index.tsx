@@ -248,8 +248,24 @@ const StyledDropzoneBox = styled(StyledBox)`
   width: 400px;
 `
 
-const StyledImage = styled.img`
+const StyledImageBox = styled(StyledBox)`
   border-radius: 3px;
+  overflow: hidden;
+  position: relative;
+
+  &::before {
+    bottom: 0;
+    border-radius: inherit;
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, .1) inset;
+    content: "";
+    left: 0;
+    position: absolute;
+    right: 0;
+    top: 0;
+  }
+`
+
+const StyledImage = styled.img`
   display: block;
   height: 100%;
   width: auto;
@@ -275,18 +291,18 @@ export const View = ({ state, dispatch }: Props) => (
       Nothing: () => null,
 
       Just: picture => (
-        <StyledBox>
+        <StyledImageBox>
           <StyledImage src={picture} />
-        </StyledBox>
+        </StyledImageBox>
       )
     })}
 
     {state.sameBreedDogs.cata({
       Succeed: sameBreedDogs => (
         sameBreedDogs.map(dog => (
-          <StyledBox key={dog}>
+          <StyledImageBox key={dog}>
             <StyledImage src={dog} />
-          </StyledBox>
+          </StyledImageBox>
         ))
       ),
 
