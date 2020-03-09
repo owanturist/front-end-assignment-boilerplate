@@ -1,4 +1,4 @@
-import { Maybe, Nothing } from 'frctl/Maybe';
+import Maybe, { Nothing } from 'frctl/Maybe';
 import * as React from 'react';
 import ReactDropzone from 'react-dropzone';
 import styled from 'styled-components';
@@ -32,16 +32,15 @@ const StyledContent = styled.div`
 `;
 
 export interface Props {
+  accept?: string | string[];
   children?: React.ReactNode;
   onLoad(file: Maybe<File>): void;
 }
 
-interface State {
+export default class Dropzone extends React.PureComponent<Props, {
   hovered: boolean;
-}
-
-export default class Dropzone extends React.PureComponent<Props, State> {
-  public readonly state: State = {
+}> {
+  public readonly state = {
     hovered: false,
   };
 
@@ -67,7 +66,7 @@ export default class Dropzone extends React.PureComponent<Props, State> {
   public render(): React.ReactElement {
     return (
       <ReactDropzone
-        accept="text/plain"
+        accept={this.props.accept}
         multiple={false}
         onDropAccepted={(files: File[]) => this.onFileLoad(Maybe.fromNullable(files[0]))}
         onDropRejected={() => this.onFileLoad(Nothing)}

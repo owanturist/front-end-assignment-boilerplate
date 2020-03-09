@@ -2,21 +2,21 @@ import './index.css';
 
 import * as React from 'react';
 import { render } from 'react-dom';
+import { ToastContainer } from 'react-toastify';
 
-import * as Counter from './components/counter';
-import { Effect } from './core';
+import * as App from './components/app';
 import { Provider } from './provider';
 
-const init = (): [Counter.State, Array<Effect<Counter.Action>>] => {
-  return Counter.initial;
-};
-
-const update = (
-  action: Counter.Action,
-  state: Counter.State,
-): [Counter.State, Array<Effect<Counter.Action>>] => action.update(state);
 
 render(
-  <Provider flags={null} init={init} update={update} view={Counter.View} />,
+  <>
+    <ToastContainer />
+    <Provider
+      flags={null}
+      init={() => [App.initial, []]}
+      update={(action, state) => action.update(state)}
+      view={App.View}
+    />
+  </>,
   document.querySelector('#root'),
 );
