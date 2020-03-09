@@ -22,6 +22,7 @@ class AviaryImpl implements Aviary {
 
   public bait(probe: string): Maybe<Breed> {
     return probe
+      .toLowerCase()
       .split(/,\s*/u)
       .reduce(
         (result, item) => result.orElse(() => this.itemSearch(item)),

@@ -234,8 +234,27 @@ export const init: [State, Array<Effect<Action>>] = [
 // V I E W
 
 const StyledRoot = styled.div`
+  display: flex;
+  flex-flow: row wrap;
+  margin: -10px 0 0 -10px;
   padding: 20px;
 `;
+
+const StyledBox = styled.div`
+  flex: 0 0 auto;
+  height: 200px;
+  margin: 10px 0 0 10px;
+`
+
+const StyledDropzoneBox = styled(StyledBox)`
+  width: 400px;
+`
+
+const StyledImage = styled.img`
+  border-radius: 3px;
+  height: 100%;
+  width: auto;
+`
 
 export interface Props {
   state: State;
@@ -244,28 +263,31 @@ export interface Props {
 
 export const View = ({ state, dispatch }: Props) => (
   <StyledRoot>
-    <Dropzone
-      accept="image/*"
-      onLoad={file => dispatch(new DropPicture(file))}
-    />
-
+    <StyledDropzoneBox>
+      <Dropzone
+        accept="image/*"
+        onLoad={file => dispatch(new DropPicture(file))}
+      >
+        Choose or drag&drop dog picture
+      </Dropzone>
+    </StyledDropzoneBox>
 
     {state.picture.cata({
       Nothing: () => null,
       Just: picture => (
-        <img src={picture} />
+        <StyledBox>
+          <StyledImage src={picture} />
+        </StyledBox>
       )
     })}
 
     {state.sameBreedDogs.cata({
       Succeed: sameBreedDogs => (
-        <div>
-          {sameBreedDogs.map(dog => (
-            <div key={dog}>
-              <img src={dog} />
-            </div>
-          ))}
-        </div>
+        sameBreedDogs.map(dog => (
+          <StyledBox key={dog}>
+            <StyledImage src={dog} />
+          </StyledBox>
+        ))
       ),
 
       _: () => null

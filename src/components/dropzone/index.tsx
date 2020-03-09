@@ -10,14 +10,17 @@ interface StyledRootProps {
 const StyledRoot = styled.div<StyledRootProps>`
   background: ${properties => properties.hovered ? '#f8f8f8' : '#eee'};
   border-radius: 3px;
+  box-sizing: border-box;
   color: #444;
   cursor: default;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
       'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
       sans-serif;
   font-size: 18px;
+  height: 100%;
   outline: none;
   padding: 20px;
+  width: 100%;
 `;
 
 const StyledContent = styled.div`
@@ -26,8 +29,8 @@ const StyledContent = styled.div`
   border-radius: 3px;
   box-sizing: border-box;
   display: flex;
+  height: 100%;
   justify-content: center;
-  min-height: 300px;
   padding: 20px;
 `;
 
