@@ -247,7 +247,7 @@ const StyledDropzoneBox = styled(StyledBox)`
 `
 
 const StyledLastBox = styled(StyledBox)`
-  flex: 4 1 0;
+  flex: 100 1 0;
   height: 0;
 `
 
@@ -273,6 +273,28 @@ const StyledImageBox = styled(StyledBox)`
   }
 `
 
+const StyledPlaceholderBox = styled(StyledImageBox)`
+  background-color: #eee;
+  box-shadow: none;
+  width: 300px;
+
+  &:nth-child(2n + 1) {
+    width: 180px;
+  }
+
+  &:nth-child(3n + 1) {
+    width: 240px;
+  }
+
+  &:nth-child(4n + 1) {
+    width: 320px;
+  }
+
+  &:nth-child(5n + 1) {
+    width: 210px;
+  }
+`
+
 const StyledOriginalImageBox = styled(StyledImageBox)`
   flex: 0 0 auto;
 `
@@ -286,10 +308,58 @@ const StyledImage = styled.img`
 
 interface ViewImageProps {
   picture: string;
+  scroller: React.RefObject<HTMLDivElement>;
 }
 
-class ViewImage extends React.PureComponent<ViewImageProps> {
+interface ViewImageState {
+  visible: boolean;
+}
+
+class ViewImage extends React.Component<ViewImageProps, ViewImageState> {
+  public state = {
+    visible: false
+  }
+
+  private readonly node = React.createRef<HTMLDivElement>();
+
+  public shouldComponentUpdate(nextProperties: ViewImageProps, nextState: ViewImageState) {
+    return this.props.picture !== nextProperties.picture
+      || this.state.visible !== nextState.visible
+      ;
+  }
+
+  public componentDidMount() {
+    const { scroller } = this.props;
+
+    if (scroller.current === null || this.node.current === null) {
+      return;
+    }
+
+    if (scroller.current.scrollTop + scroller.current.clientHeight >= this.node.current.offsetTop) {
+      this.setState({ visible: true });
+
+      return;
+    }
+
+    const onScroll = () => {
+      if (scroller.current !== null && this.node.current !== null
+        && scroller.current.scrollTop + scroller.current.clientHeight >= this.node.current.offsetTop
+      ) {
+        this.setState({ visible: true });
+        scroller.current.removeEventListener('scroll', onScroll)
+      }
+    }
+
+    scroller.current.addEventListener('scroll', onScroll);
+  }
+
   public render() {
+    if (!this.state.visible) {
+      return (
+        <StyledPlaceholderBox ref={this.node} />
+      );
+    }
+
     const { picture } = this.props;
 
     return (
@@ -351,74 +421,86 @@ export interface Props {
   dispatch: Dispatch<Action>;
 }
 
-const StyledRoot = styled.div`
-  box-sizing: border-box;
-  display: flex;
-  flex-flow: row wrap;
+const StyledScroller = styled.div`
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
       'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
       sans-serif;
   font-size: 18px;
-  margin: -10px 0 0 -10px;
+  height: 100%;
   min-height: 100%;
   overflow-y: auto;
-  padding: 20px;
 `;
 
+const StyledContent = styled.div`
+  display: flex;
+  flex-flow: row wrap;
+  margin: -10px 0 0 -10px;
+  padding: 20px;
+`
+
 export class View extends React.PureComponent<Props> {
+  private readonly scrollerReference = React.createRef<HTMLDivElement>();
+
   public render() {
     const { state, dispatch } = this.props;
 
     return (
-      <StyledRoot onScroll={this.onScroll}>
-        <StyledDropzoneBox>
-          <Dropzone
-            accept="image/*"
-            onLoad={file => dispatch(new DropPicture(file))}
-          >
-            Choose or drag&drop dog picture
-          </Dropzone>
-        </StyledDropzoneBox>
+      <StyledScroller ref={this.scrollerReference}>
+        <StyledContent>
+          <StyledDropzoneBox>
+            <Dropzone
+              accept="image/*"
+              onLoad={file => dispatch(new DropPicture(file))}
+            >
+              Choose or drag&drop dog picture
+            </Dropzone>
+          </StyledDropzoneBox>
 
-        {state.picture.cata({
-          Nothing: () => null,
+          {state.picture.cata({
+            Nothing: () => null,
 
-          Just: picture => state.search.isSucceed() ? (
-            <ViewImage picture={picture} />
-          ) : (
-              <StyledOriginalImageBox
+            Just: picture => state.search.isSucceed() ? (
+              <StyledImageBox
                 style={{
                   backgroundImage: `url(${picture})`
                 }}
               >
                 <StyledImage src={picture} />
-              </StyledOriginalImageBox>
-            )
-        })}
+              </StyledImageBox>
+            ) : (
+                <StyledOriginalImageBox
+                  style={{
+                    backgroundImage: `url(${picture})`
+                  }}
+                >
+                  <StyledImage src={picture} />
+                </StyledOriginalImageBox>
+              )
+          })}
 
-        {state.search.cata({
-          Succeed: search => (
-            <ViewProbeBox probe={search.probe} />
-          ),
+          {state.search.cata({
+            Succeed: search => (
+              <ViewProbeBox probe={search.probe} />
+            ),
 
-          _: () => null
-        })}
+            _: () => null
+          })}
 
-        {state.search.cata({
-          Succeed: search => search.pack.map(dog => (
-            <ViewImage key={dog} picture={dog} />
-          )),
+          {state.search.cata({
+            Succeed: search => search.pack.map(dog => (
+              <ViewImage
+                key={dog}
+                picture={dog}
+                scroller={this.scrollerReference}
+              />
+            )),
 
-          _: () => null
-        })}
+            _: () => null
+          })}
 
-        <StyledLastBox />
-      </StyledRoot>
+          <StyledLastBox />
+        </StyledContent>
+      </StyledScroller>
     )
   }
-
-  private readonly onScroll = (event: React.UIEvent<HTMLElement>) => {
-    // eslint-disable-next-line no-console
-    console.log(event.currentTarget.scrollTop);
-  };
 }
